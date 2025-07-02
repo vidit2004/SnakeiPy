@@ -1,5 +1,9 @@
 import pygame
 from random import randrange
+import mysql.connector
+from datetime import datetime
+
+time_start = datetime.now()
 
 # global variables for the game
 Size = 600    # size of canvas
@@ -122,6 +126,7 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             done = True
+            break
 
     screen.fill(black)
     if boundary_check() or body_check():
@@ -139,3 +144,27 @@ while not done:
     pygame.display.update()
 
     clock.tick(Speed)  
+    
+time_end = datetime.now()
+
+#MySQL data storage
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="root",
+    database="snakestats"
+)
+mycursor = db.cursor()
+#If not table, create table
+mycursor.execute("SHOW TABLES")
+make_table = True
+for result in mycursor:
+    if result==('stats',):
+        make_table = False
+
+if make_table:
+    mycursor.execute("CREATE TABLE stats(stime DATETIME, etime DATETIME, width INTEGER(10), speed INTEGER(10), score INTEGER(10))")
+    db.commit()
+#Insert data
+mycursor.execute("INSERT INTO stats VALUES(%s,%s,%s,%s,%s)", (time_start, time_end, Scale, Speed, score))
+db.commit()
